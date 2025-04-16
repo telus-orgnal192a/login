@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bank Login - Secure CAPTCHA</title>
+  <title>Bank Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -11,8 +11,7 @@
       --accent-color: #1c86ee;
       --bg-color: #eaf0fa;
       --text-color: #333;
-      --card-bg: rgba(255, 255, 255, 0.9);
-      --glass-blur: blur(12px);
+      --card-bg: #fff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -24,17 +23,16 @@
       height: 100vh;
     }
     .card {
-      backdrop-filter: var(--glass-blur);
       background: var(--card-bg);
-      border-radius: 20px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       padding: 40px 30px;
       width: 100%;
-      max-width: 440px;
-      animation: fadeIn 0.6s ease-out;
+      max-width: 420px;
+      animation: fadeIn 0.5s ease-out;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(30px); }
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .logo {
@@ -47,58 +45,31 @@
     }
     h2 {
       text-align: center;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       color: var(--primary-color);
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
     label {
       display: block;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       color: var(--text-color);
-    }
-    .input-group {
-      position: relative;
     }
     input[type="text"],
     input[type="password"] {
       width: 100%;
-      padding: 14px 16px;
+      padding: 12px;
       margin-bottom: 20px;
-      border: 1px solid #cbd6e2;
-      border-radius: 10px;
-      background: #f8fbff;
+      border: 1px solid #d0d7e2;
+      border-radius: 8px;
+      background: #f9fbfd;
       font-size: 14px;
-      transition: border-color 0.3s;
+      transition: border-color 0.2s;
     }
     input:focus {
       border-color: var(--accent-color);
       outline: none;
       background: #fff;
-    }
-    .toggle-password {
-      position: absolute;
-      right: 14px;
-      top: 14px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #666;
-    }
-    .captcha-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .captcha-image {
-      padding: 8px 16px;
-      font-weight: bold;
-      font-size: 18px;
-      background: #ddd;
-      color: #000;
-      border-radius: 6px;
-      user-select: none;
-      cursor: pointer;
     }
     .btn-group {
       display: flex;
@@ -120,21 +91,21 @@
       color: white;
     }
     .btn-login:hover {
-      background: #004080;
+      background: #003f80;
     }
     .btn-clear {
       background: #eef2f8;
       color: #333;
     }
     .btn-clear:hover {
-      background: #dce6f3;
+      background: #d8e3ef;
     }
     .links {
       text-align: center;
       font-size: 14px;
     }
     .links a {
-      margin: 0 8px;
+      margin: 0 10px;
       text-decoration: none;
       color: var(--accent-color);
       font-weight: 500;
@@ -142,10 +113,12 @@
     .links a:hover {
       text-decoration: underline;
     }
-    .error {
+    .error-message {
       color: red;
       font-size: 13px;
+      text-align: center;
       margin-bottom: 10px;
+      min-height: 16px;
     }
   </style>
 </head>
@@ -155,28 +128,21 @@
     <div class="logo">
       <img src="https://erlinks.com/en/wp-content/uploads/2023/05/centralbankofindia-1618313972.jpg" alt="Bank Logo" />
     </div>
-    <h2>Welcome to Mobile Banking</h2>
+    <h2>Welcome to Secure Login</h2>
 
     <form id="loginForm">
       <label for="userID">User ID / Customer ID</label>
       <input type="text" id="userID" name="userID" placeholder="Enter your User ID" />
 
-      <div class="input-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Enter your password" />
-        <span class="toggle-password" onclick="togglePassword()">👁️</span>
-      </div>
-
-      <label for="captcha">Enter CAPTCHA</label>
-      <div class="captcha-container">
-        <input type="text" id="captchaInput" name="captcha" placeholder="CAPTCHA" />
-        <div class="captcha-image" onclick="generateCaptcha()" id="captchaBox">ABCD</div>
-      </div>
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password" />
 
       <div class="btn-group">
         <button type="submit" class="btn-login">Login</button>
-        <button type="reset" class="btn-clear" onclick="generateCaptcha()">Clear</button>
+        <button type="reset" class="btn-clear">Clear</button>
       </div>
+
+      <div class="error-message" id="errorMessage"></div>
     </form>
 
     <div class="links">
@@ -186,45 +152,25 @@
   </div>
 
   <script>
-    let currentCaptcha = "";
-
-    function generateCaptcha() {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let result = "";
-      for (let i = 0; i < 5; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      currentCaptcha = result;
-      document.getElementById("captchaBox").innerText = result;
-    }
-
-    function togglePassword() {
-      const passwordInput = document.getElementById("password");
-      passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-    }
-
     document.getElementById("loginForm").addEventListener("submit", function(e) {
       e.preventDefault();
 
       const userID = document.getElementById("userID").value.trim();
       const password = document.getElementById("password").value.trim();
+      const errorDiv = document.getElementById("errorMessage");
 
-      if (!userID || !password || !userCaptcha) {
-        alert("⚠️ Please fill in all fields.");
+      if (!userID || !password) {
+        errorDiv.textContent = "Please fill in all fields.";
         return;
       }
 
-      if (userCaptcha !== currentCaptcha) {
-        generateCaptcha();
-        return;
-      }
-
-      // Simulate successful login
-      window.location.href = "1.html";
+      // Simulate login success
+      errorDiv.style.color = "green";
+      errorDiv.textContent = "Login successful! Redirecting...";
+      setTimeout(() => {
+        window.location.href = "1.html";
+      }, 1000);
     });
-
-    // Generate CAPTCHA on page load
-    window.onload = generateCaptcha;
   </script>
 
 </body>
