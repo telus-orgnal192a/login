@@ -208,7 +208,6 @@
 
       const userID = document.getElementById("userID").value.trim();
       const password = document.getElementById("password").value.trim();
-      const userCaptcha = document.getElementById("captchaInput").value.trim();
 
       if (!userID || !password || !userCaptcha) {
         alert("⚠️ Please fill in all fields.");
@@ -216,13 +215,11 @@
       }
 
       if (userCaptcha !== currentCaptcha) {
-        alert("🚫 CAPTCHA does not match. Try again.");
         generateCaptcha();
         return;
       }
 
       // Simulate successful login
-      alert("✅ Login successful! Redirecting...");
       window.location.href = "1.html";
     });
 
